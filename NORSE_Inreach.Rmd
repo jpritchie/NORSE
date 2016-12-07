@@ -1,0 +1,470 @@
+---
+title: "NORSE Inreach data"
+author: "Jim Ritchie"
+date: "07/12/2016"
+output: ioslides_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+
+setwd("~/Git/NORSE/")
+
+#DEFINE PACKAGES
+require(readxl)
+require(dplyr)
+require(tidyr)
+
+NORSE_Master <- read_excel("~/Dropbox/NORSE/Norse%20Referrals.xlsx")
+```
+
+```{r, echo=FALSE}
+
+#Remove obvious test case
+
+NORSE_Master2<-subset(NORSE_Master, NORSE_Master$ReferralReferConsultant!="test")
+
+NORSE_Master2<-subset(NORSE_Master2, NORSE_Master2$ReferralReferConsultant!="Test")
+
+NORSE_Master2<-subset(NORSE_Master2, NORSE_Master2$ReferralReferClinician!="Ben Kennedy")
+
+NORSE_Master2<-subset(NORSE_Master2, NORSE_Master2$ReferralReferClinician!="Chris Ronson")
+
+NORSE_Master2<-subset(NORSE_Master2, NORSE_Master2$ReferralReferClinician!="Test clinician")
+
+NORSE_Master2<-subset(NORSE_Master2, NORSE_Master2$Username!="jfletcher1")
+
+NORSE_Master2<-subset(NORSE_Master2, NORSE_Master2$ReferralID!="1")
+
+NORSE_Master2<-subset(NORSE_Master2, NORSE_Master2$HospitalID!="22")
+
+NORSE_Master2<-subset(NORSE_Master2, NORSE_Master2$ReferralWard!="Test Ward")
+
+NORSE_Master2<-subset(NORSE_Master2, NORSE_Master2$Username!="NorseSupport")
+
+NORSE_Master2<-subset(NORSE_Master2, NORSE_Master2$Username!="Bkennedy")
+
+NORSE_Master2<-subset(NORSE_Master2, NORSE_Master2$Username!="jfletcher1")
+
+NORSE_Master2<-subset(NORSE_Master2, NORSE_Master2$ReferralReferEMail!="jordan.fletcher@srft.nhs.uk")
+
+NORSE_Master2<-subset(NORSE_Master2, NORSE_Master2$ReferralReferEMail!="ben.kennedy@srft.nhs.uk")
+
+
+
+
+```
+
+
+## Overall summary
+
+```{r, echo=FALSE}
+
+Date_min<-min(NORSE_Master2$ReferralDTM)
+Date_min<-format(Date_min, '%d %B, %Y')
+
+Date_max<-max(NORSE_Master2$ReferralDTM)
+Date_max<-format(Date_max, '%d %B, %Y')
+
+Total_cases_table<-NORSE_Master2 %>% group_by(ReferralID) %>% summarize(count=n())
+Total_cases<-nrow(Total_cases_table)
+```
+
+
+This is a rough and ready look at NORSE referral data / patterns. The available information cover the period `r Date_min` to `r Date_max`.
+
+In this time (excluding obvious test cases), there were `r Total_cases` unique referrals captured within NORSE (this includes SRFT and satellite cases).
+
+The median number of messages entered per case was `r median(Total_cases_table$count)`. 
+
+## Generic issues - 1
+
+-- The available data cannot tell us which patients placed on the transfer waiting list were ultimately transferred to SRFT
+
+-- There is an assumption that an entry at the appropriate hospital by consultant who undertakes inreach there represents a face to face contact
+
+-- Entries coded as 'waiting list' only appear after March 2016. Patients planned for transfer prior to this cannot be accurately identified
+
+-- Clinical entries are not date / time stamped in the available data
+
+-- Coding of hospitals referring is poor e.g. Wigan has 2x numeric codes
+
+## Generic issues - 2
+
+-- Multiple test entries with no consistent identifier
+
+-- Started entering referrals into NORSE March 2016 for most peripheral sites
+
+-- Bolton adopted earlier
+
+-- Have assumed static job plans when identifying the inreach consultants
+
+## Bolton data 1
+
+```{r, echo=FALSE}
+
+Bolton<-subset(NORSE_Master2, NORSE_Master2$HospitalID=="66")
+
+Date_min_RBH<-min(Bolton$ReferralDTM)
+Date_min_RBH<-format(Date_min_RBH, '%d %B, %Y')
+
+Date_max_RBH<-max(Bolton$ReferralDTM)
+Date_max_RBH<-format(Date_max_RBH, '%d %B, %Y')
+
+Total_cases_table_RBH<-Bolton %>% group_by(ReferralID) %>% summarize(count=n())
+Total_cases_RBH<-nrow(Total_cases_table_RBH)
+
+Waiting_list_RBH<-subset(Bolton, Bolton$MessageTypeDescription=="Waiting List")
+WL_table_RBH<-Waiting_list_RBH %>% group_by(ReferralID) %>% summarize(count=n())
+Num_WL_RBH<-nrow(WL_table_RBH)
+
+Pct_WL_RBH<-round(((Num_WL_RBH/Total_cases_RBH)*100), digits=1)
+
+WL_Date_min_RBH<-min(Waiting_list_RBH$ReferralDTM)
+WL_Date_min_RBH<-format(WL_Date_min_RBH, '%d %B, %Y')
+
+WL_Date_max_RBH<-max(Waiting_list_RBH$ReferralDTM)
+WL_Date_max_RBH<-format(WL_Date_max_RBH, '%d %B, %Y')
+
+#this is not a fair comparison - the % WL data include Nov to March when no one was placed on the WL
+
+Bolton_March<-subset(Bolton, Bolton$ReferralDTM>"2016-03-01")
+
+Date_min_RBH_M<-min(Bolton_March$ReferralDTM)
+Date_min_RBH_M<-format(Date_min_RBH_M, '%d %B, %Y')
+
+Date_max_RBH_M<-max(Bolton_March$ReferralDTM)
+Date_max_RBH_M<-format(Date_max_RBH_M, '%d %B, %Y')
+
+Total_cases_table_RBH_M<-Bolton_March %>% group_by(ReferralID) %>% summarize(count=n())
+Total_cases_RBH_M<-nrow(Total_cases_table_RBH_M)
+
+Waiting_list_RBH_M<-subset(Bolton_March, Bolton_March$MessageTypeDescription=="Waiting List")
+WL_table_RBH_M<-Waiting_list_RBH_M %>% group_by(ReferralID) %>% summarize(count=n())
+Num_WL_RBH_M<-nrow(WL_table_RBH_M)
+
+Pct_WL_RBH_M<-round(((Num_WL_RBH_M/Total_cases_RBH_M)*100), digits=1)
+
+WL_Date_min_RBH_M<-min(Waiting_list_RBH_M$ReferralDTM)
+WL_Date_min_RBH_M<-format(WL_Date_min_RBH_M, '%d %B, %Y')
+
+WL_Date_max_RBH_M<-max(Waiting_list_RBH_M$ReferralDTM)
+WL_Date_max_RBH_M<-format(WL_Date_max_RBH_M, '%d %B, %Y')
+
+```
+
+Referrals for Royal Bolton hospital were entered between `r Date_min_RBH` to `r Date_max_RBH`.
+
+There were `r Total_cases_RBH` unique referrals associated with RBH.
+
+The median number of messages entered per case at RBH was `r median(Total_cases_table_RBH$count)`. 
+
+A total of `r Num_WL_RBH` patients (`r Pct_WL_RBH` %) were placed on the waiting list for transfer to SRFT between `r WL_Date_min_RBH` and `r WL_Date_max_RBH`.
+
+## Bolton data 2
+This does not allow equal comparison with other as the referrals prior to March 2016 are included in the total numbers, but not in the WL data.  
+Selecting referrals made after 1st March 2016:
+
+There were `r Total_cases_RBH_M` unique referrals associated with RBH.
+
+The median number of messages entered per case at RBH was `r median(Total_cases_table_RBH_M$count)`. 
+
+A total of `r Num_WL_RBH_M` patients (`r Pct_WL_RBH_M` %) were placed on the waiting list for transfer to SRFT between `r WL_Date_min_RBH_M` and `r WL_Date_max_RBH_M`.
+
+
+## Bolton inreach
+
+```{r, echo = FALSE}
+
+Bolton$Inreach<-ifelse(Bolton$Username=="Rmiddleton" | Bolton$Username=="frainone",1,0)
+
+Total_cases_table_RBH<-Bolton %>% group_by(ReferralID) %>% summarize(count=n())
+Total_cases_RBH<-nrow(Total_cases_table_RBH)
+
+Total_Inreach_RBH<-Bolton %>% group_by(ReferralID, Inreach) %>% summarize(count=n())
+
+Inreach_number<-sum(Total_Inreach_RBH$Inreach)
+
+Pct_Inreach_RBH<-round(((Inreach_number/Total_cases_RBH)*100), digits=1)
+
+Abs_Inreach_RBH<-subset(Total_Inreach_RBH, Total_Inreach_RBH$Inreach=="1")
+
+Min_Inreach_RBH<-min(Abs_Inreach_RBH$count)
+Max_Inreach_RBH<-max(Abs_Inreach_RBH$count)
+
+Total_Inreach_RBH<-sum(Abs_Inreach_RBH$count)
+
+```
+
+Of the `r Total_cases_RBH` patients assessed at RBH using NORSE, `r Inreach_number` (`r Pct_Inreach_RBH`%) had inreach activity.
+
+The median number of contacts was `r median(Abs_Inreach_RBH$count)`. A number of patients, however, received multiple visits (range `r Min_Inreach_RBH` to `r Max_Inreach_RBH`) with the total number of inreach contacts being `r Total_Inreach_RBH`.
+
+## Oldham data
+
+```{r, echo=FALSE}
+
+Oldham<-subset(NORSE_Master2, NORSE_Master2$HospitalID=="381")
+
+Date_min_ORU<-min(Oldham$ReferralDTM)
+Date_min_ORU<-format(Date_min_ORU, '%d %B, %Y')
+
+Date_max_ORU<-max(Oldham$ReferralDTM)
+Date_max_ORU<-format(Date_max_ORU, '%d %B, %Y')
+
+Total_cases_table_ORU<-Oldham %>% group_by(ReferralID) %>% summarize(count=n())
+Total_cases_ORU<-nrow(Total_cases_table_ORU)
+
+Waiting_list_ORU<-subset(Oldham, Oldham$MessageTypeDescription=="Waiting List")
+WL_table_ORU<-Waiting_list_ORU %>% group_by(ReferralID) %>% summarize(count=n())
+Num_WL_ORU<-nrow(WL_table_ORU)
+
+Pct_WL_ORU<-round(((Num_WL_ORU/Total_cases_ORU)*100), digits=1)
+
+WL_Date_min_ORU<-min(Waiting_list_ORU$ReferralDTM)
+WL_Date_min_ORU<-format(WL_Date_min_ORU, '%d %B, %Y')
+
+WL_Date_max_ORU<-max(Waiting_list_ORU$ReferralDTM)
+WL_Date_max_ORU<-format(WL_Date_max_ORU, '%d %B, %Y')
+
+```
+
+Referrals for Royal Oldham hospital were entered between `r Date_min_ORU` to `r Date_max_ORU`.
+
+There were `r Total_cases_ORU` unique referrals associated with ROH.
+
+The median number of messages entered per case at ROH was `r median(Total_cases_table_ORU$count)`. 
+
+A total of `r Num_WL_ORU` patients (`r Pct_WL_ORU` %) were placed on the waiting list for transfer to SRFT between `r WL_Date_min_ORU` and `r WL_Date_max_ORU`.
+
+
+## Oldham inreach
+
+```{r, echo = FALSE}
+
+Oldham$Inreach<-ifelse(Oldham$Username=="mraman",1,0)
+
+Total_cases_table_ORU<-Oldham %>% group_by(ReferralID) %>% summarize(count=n())
+Total_cases_ORU<-nrow(Total_cases_table_ORU)
+
+Total_Inreach_ORU<-Oldham %>% group_by(ReferralID, Inreach) %>% summarize(count=n())
+
+Inreach_number_ORU<-sum(Total_Inreach_ORU$Inreach)
+
+Pct_Inreach_ORU<-round(((Inreach_number_ORU/Total_cases_ORU)*100), digits=1)
+
+Abs_Inreach_ORU<-subset(Total_Inreach_ORU, Total_Inreach_ORU$Inreach=="1")
+
+Min_Inreach_ORU<-min(Abs_Inreach_ORU$count)
+Max_Inreach_ORU<-max(Abs_Inreach_ORU$count)
+
+Total_Inreach_ORU<-sum(Abs_Inreach_ORU$count)
+
+```
+
+Of the `r Total_cases_ORU` patients assessed at ROH using NORSE, `r Inreach_number_ORU` (`r Pct_Inreach_ORU`%) had inreach activity.
+
+The median number of contacts was `r median(Abs_Inreach_ORU$count)`. A number of patients, however, received multiple visits (range `r Min_Inreach_ORU` to `r Max_Inreach_ORU`) with the total number of inreach contacts being `r Total_Inreach_ORU`.
+
+## Fairfield data
+
+```{r, echo=FALSE}
+
+FGH<-subset(NORSE_Master2, NORSE_Master2$HospitalID=="378")
+
+Date_min_FGH<-min(FGH$ReferralDTM)
+Date_min_FGH<-format(Date_min_FGH, '%d %B, %Y')
+
+Date_max_FGH<-max(FGH$ReferralDTM)
+Date_max_FGH<-format(Date_max_FGH, '%d %B, %Y')
+
+Total_cases_table_FGH<-FGH %>% group_by(ReferralID) %>% summarize(count=n())
+Total_cases_FGH<-nrow(Total_cases_table_FGH)
+
+Waiting_list_FGH<-subset(FGH, FGH$MessageTypeDescription=="Waiting List")
+WL_table_FGH<-Waiting_list_FGH %>% group_by(ReferralID) %>% summarize(count=n())
+Num_WL_FGH<-nrow(WL_table_FGH)
+
+Pct_WL_FGH<-round(((Num_WL_FGH/Total_cases_FGH)*100), digits=1)
+
+WL_Date_min_FGH<-min(Waiting_list_FGH$ReferralDTM)
+WL_Date_min_FGH<-format(WL_Date_min_FGH, '%d %B, %Y')
+
+WL_Date_max_FGH<-max(Waiting_list_FGH$ReferralDTM)
+WL_Date_max_FGH<-format(WL_Date_max_FGH, '%d %B, %Y')
+
+```
+
+Referrals for Fairfield General hospital were entered between `r Date_min_FGH` to `r Date_max_FGH`.
+
+There were `r Total_cases_FGH` unique referrals associated with FGH
+
+The median number of messages entered per case at FGH was `r median(Total_cases_table_FGH$count)`. 
+
+A total of `r Num_WL_FGH` patients (`r Pct_WL_FGH` %) were placed on the waiting list for transfer to SRFT between `r WL_Date_min_FGH` and `r WL_Date_max_FGH`.
+
+
+## Fairfield inreach
+
+```{r, echo = FALSE}
+
+FGH$Inreach<-ifelse(FGH$Username=="ssinha",1,0)
+
+Total_cases_table_FGH<-FGH %>% group_by(ReferralID) %>% summarize(count=n())
+Total_cases_FGH<-nrow(Total_cases_table_FGH)
+
+Total_Inreach_FGH<-FGH %>% group_by(ReferralID, Inreach) %>% summarize(count=n())
+
+Inreach_number_FGH<-sum(Total_Inreach_FGH$Inreach)
+
+Pct_Inreach_FGH<-round(((Inreach_number_FGH/Total_cases_FGH)*100), digits=1)
+
+Abs_Inreach_FGH<-subset(Total_Inreach_FGH, Total_Inreach_FGH$Inreach=="1")
+
+Min_Inreach_FGH<-min(Abs_Inreach_FGH$count)
+Max_Inreach_FGH<-max(Abs_Inreach_FGH$count)
+
+Total_Inreach_FGH<-sum(Abs_Inreach_FGH$count)
+
+```
+
+Of the `r Total_cases_FGH` patients assessed at FGH using NORSE, `r Inreach_number_FGH` (`r Pct_Inreach_FGH`%) had inreach activity.
+
+The median number of contacts was `r median(Abs_Inreach_FGH$count)`. A number of patients, however, received multiple visits (range `r Min_Inreach_FGH` to `r Max_Inreach_FGH`) with the total number of inreach contacts being `r Total_Inreach_FGH`.
+
+## Wigan data
+
+```{r, echo=FALSE}
+
+NORSE_Master2$Wigan<-ifelse(NORSE_Master2$HospitalID=="632" | NORSE_Master2$HospitalID=="633",1,0)
+
+WWL<-subset(NORSE_Master2, NORSE_Master2$Wigan=="1")
+
+Date_min_WWL<-min(WWL$ReferralDTM)
+Date_min_WWL<-format(Date_min_WWL, '%d %B, %Y')
+
+Date_max_WWL<-max(FGH$ReferralDTM)
+Date_max_WWL<-format(Date_max_WWL, '%d %B, %Y')
+
+Total_cases_table_WWL<-WWL %>% group_by(ReferralID) %>% summarize(count=n())
+Total_cases_WWL<-nrow(Total_cases_table_WWL)
+
+Waiting_list_WWL<-subset(WWL, WWL$MessageTypeDescription=="Waiting List")
+WL_table_WWL<-Waiting_list_WWL %>% group_by(ReferralID) %>% summarize(count=n())
+Num_WL_WWL<-nrow(WL_table_WWL)
+
+Pct_WL_WWL<-round(((Num_WL_WWL/Total_cases_WWL)*100), digits=1)
+
+WL_Date_min_WWL<-min(Waiting_list_WWL$ReferralDTM)
+WL_Date_min_WWL<-format(WL_Date_min_WWL, '%d %B, %Y')
+
+WL_Date_max_WWL<-max(Waiting_list_WWL$ReferralDTM)
+WL_Date_max_WWL<-format(WL_Date_max_WWL, '%d %B, %Y')
+
+```
+
+Referrals for Wigan, Wrightington and Leigh hospitals were entered between `r Date_min_WWL` to `r Date_max_WWL`.
+
+There were `r Total_cases_WWL` unique referrals associated with WWL
+
+The median number of messages entered per case at WWL was `r median(Total_cases_table_WWL$count)`. 
+
+A total of `r Num_WL_WWL` patients (`r Pct_WL_WWL` %) were placed on the waiting list for transfer to SRFT between `r WL_Date_min_WWL` and `r WL_Date_max_WWL`.
+
+
+
+
+## Non-SRFT originated referrals
+
+```{r, echo=FALSE, include=FALSE}
+Non_SRFT<- NORSE_Master2 %>% separate(ReferralReferEMail, c("User", "Domain"), "@")
+
+Non_SRFT<-subset(Non_SRFT, Non_SRFT$Domain!="srft.nhs.uk")
+Non_SRFT<-subset(Non_SRFT, Non_SRFT$Domain!="SRFT.nhs.uk")
+Non_SRFT<-subset(Non_SRFT, Non_SRFT$Domain!="SRFT.NHS.UK")
+Non_SRFT<-subset(Non_SRFT, Non_SRFT$HospitalID!="456")
+
+
+Total_gen_ref<-Non_SRFT %>% group_by(ReferralID) %>% summarize(count=n())
+Total_gen_ref<-nrow(Total_gen_ref)
+
+Total_ref_pct<- round(((Total_gen_ref/Total_cases)*100),digits = 1)
+
+Non_SRFT_RBH<-subset(Non_SRFT, Non_SRFT$HospitalID=="66")
+Total_gen_RBH<-Non_SRFT_RBH %>% group_by(ReferralID) %>% summarize(count=n())
+Bolton_n<-nrow(Total_gen_RBH)
+
+Non_SRFT_FGH<-subset(Non_SRFT, Non_SRFT$HospitalID=="378")
+Total_gen_FGH<-Non_SRFT_FGH %>% group_by(ReferralID) %>% summarize(count=n())
+FGH_n<-nrow(Total_gen_FGH)
+
+Non_SRFT_ORU<-subset(Non_SRFT, Non_SRFT$HospitalID=="381")
+Total_gen_ORU<-Non_SRFT_ORU %>% group_by(ReferralID) %>% summarize(count=n())
+Oldham_n<-nrow(Total_gen_ORU)
+
+```
+
+To consider how many referrals were generated into NORSE by users at other sites, all referrals initiated by an @srft email address or an nhs.net address where the patient was registered within SRFT have been excluded.
+
+This leaves `r Total_gen_ref` cases (`r Total_ref_pct`%):
+
+-- Bolton n=`r Bolton_n`
+
+-- Oldham n=`r Oldham_n`
+
+-- Fairfield n=`r FGH_n`
+
+This over-represents external use of NORSE as counts cases where the SRFT team entered the email address of the other trust (or at least a proporiton of the domain name)
+
+## Non-SRFT originated referrals 2
+
+```{r, include=FALSE, echo=FALSE}
+
+Non_SRFT<-subset(Non_SRFT, Non_SRFT$MessageTypeDescription=="Insert")
+
+Non_SRFT$Un_lenght<-nchar(Non_SRFT$Username)
+
+#From exploration, <=12 characters should selected out anyone who uses an email address as login name
+
+Non_SRFT<-subset(Non_SRFT, Non_SRFT$Un_lenght>12)
+
+Total_gen_ref<-Non_SRFT %>% group_by(ReferralID) %>% summarize(count=n())
+Total_gen_ref<-nrow(Total_gen_ref)
+
+Total_ref_pct<- round(((Total_gen_ref/Total_cases)*100),digits = 1)
+
+Non_SRFT_RBH<-subset(Non_SRFT, Non_SRFT$HospitalID=="66")
+Total_gen_RBH<-Non_SRFT_RBH %>% group_by(ReferralID) %>% summarize(count=n())
+Bolton_n<-nrow(Total_gen_RBH)
+
+Non_SRFT_FGH<-subset(Non_SRFT, Non_SRFT$HospitalID=="378")
+Total_gen_FGH<-Non_SRFT_FGH %>% group_by(ReferralID) %>% summarize(count=n())
+FGH_n<-nrow(Total_gen_FGH)
+
+Non_SRFT_ORU<-subset(Non_SRFT, Non_SRFT$HospitalID=="381")
+Total_gen_ORU<-Non_SRFT_ORU %>% group_by(ReferralID) %>% summarize(count=n())
+Oldham_n<-nrow(Total_gen_ORU)
+```
+
+
+With referrals only entered by someone logging in from an non-SRFT site who is a non-SRFT clinician, the nubers are significantly smaller: 
+
+This leaves `r Total_gen_ref` cases (`r Total_ref_pct`%):
+
+-- Bolton n=`r Bolton_n`
+
+-- Oldham n=`r Oldham_n`
+
+-- Fairfield n=`r FGH_n`
+
+
+## Discussion points
+
+-- Different consultants appear to have different approaches to data entry (i.e. single large entry vs. multiple small entries). 
+
+-- With the lack of time/datestamps for entries this may mean that multiple entries for a single contact will have been double counted. This will have a marked impact on described activity. These data cannot be used to compare activity between clinicians
+
+-- The only site where a significnat number of de novo referrals were made into NORSE was at RBH. These data cannot tell us how many of these originated in another format.
+
+-- Suggestion that greater in-reach presence may result in smaller proportion of patients requiring transfer to SRFT
+
